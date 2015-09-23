@@ -5,9 +5,11 @@
 	<script type="text/javascript" src="js/sockjs-1.0.3.js"></script>
 	<script type="text/javascript" src="js/jquery-1.11.3.js"></script>
 	<script type="text/javascript" src="js/hash.js"></script>
+	<script type="text/javascript" src="js/knockout-3.3.0.js"></script>
 </head>
 <body>
 <button id="test">Send data</button>
+<button id="testDelete">Send delete data</button>
 <textarea id="log"></textarea>
 <script>
 var testData = {},
@@ -30,6 +32,10 @@ sock.onmessage = function(e){
 		} else {
 			console.log("hash already matches, no patch");
 		}
+
+		//	Update log
+		$('#log').val(JSON.stringify(testData));
+
 	}
 };
 
@@ -52,6 +58,39 @@ $('#test').click(function(){
 		hash: hash(newTestData)
 	}));
 });
+
+//	Click the test button to see the magic
+$('#testDelete').click(function(){
+	//	Clone object and add something
+	var newTestData = {};
+	jsondiffpatch.patch(newTestData, jsondiffpatch.diff({}, testData));
+	delete newTestData.c;
+	var delta = jsondiffpatch.diff(testData, newTestData);
+	//	Patch it, so only other clients need to patch
+	testData = newTestData;
+	//	Send it
+	sock.send(JSON.stringify({
+		diff: delta,
+		hash: hash(newTestData)
+	}));
+});
+
+
+
+
+
+var DataPortal = function(obj){
+	var self = this,
+		initialObject = 
+		publish = function(name, object){
+		};
+
+
+
+};
+
+
+
 </script>
 
 
@@ -96,6 +135,60 @@ ko.dataPortal = function(root, isInitiallyDirty) {
 
 */
 </script>
+
+
+<ul data-bind="foreach: items">
+    <li>
+        <span data-bind="text: id"></span>
+        <input data-bind="value: name" />
+    </li>
+</ul>
+
+<script>
+
+ko.dataPortal = function(root, isInitiallyDirty) {
+    var result = function() {},
+        _initialState = ko.observable(ko.toJSON(root)),
+        _isInitiallyDirty = ko.observable(isInitiallyDirty);
+
+    result.isDirty = ko.computed(function() {
+        var isDirty = _isInitiallyDirty() || _initialState() !== ko.toJSON(root);
+        if(isDirty) {
+        	console.log(ko.toJSON(root), "is dirty");
+        }
+        return isDirty;
+    });
+
+    result.reset = function() {
+        _initialState(ko.toJSON(root));
+        _isInitiallyDirty(false);
+    };
+
+    return result;
+};
+
+
+function Item(id, name) {
+    this.id = ko.observable(id);
+    this.name = ko.observable(name);
+}
+
+var ViewModel = function(items) {
+    this.items = ko.observableArray([
+        new Item(1, "one"),
+        new Item(2, "two"),
+        new Item(3, "three")
+    ]);
+    
+    //	Setup data portal functionality
+    this.dataPortal = new ko.dataPortal(this);
+};
+
+ko.applyBindings(new ViewModel());
+
+</script>
+
+
 
 </body>
 </html>

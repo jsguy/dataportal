@@ -25,8 +25,10 @@ var http = require('http'),
 	dataPortal = sockjs.createServer({
 		sockjs_url: 'http://cdn.jsdelivr.net/sockjs/1.0.3/sockjs.min.js' 
 	}),
+	subscriptions = {},
 	clients = [],
 	testData = {a:"1", b:"2"},
+
 	//	Create a response.
 	//	TODO: define a standard for this - also don't trust the clients!.
 	createResponse = function(type, data){
@@ -45,41 +47,101 @@ var http = require('http'),
 	        };
 	    }
 	    return JSON.stringify(response);
+	},
+
+	hasSubscription = function(topic, client){
+		var hasSub = false;
+		if(subscriptions[topic]) {}
+		for(var i = 0; i < subscriptions[topic].length; i += 1) {
+			if(subscriptions[topic][i] === client) {
+				hasSub = true;
+			}
+		}
+		return hasSub;
+	},
+
+	//	Subscribe a client to a topic
+	subscribe = function(topic, client){
+		console.log("subscribe", topic, client);
+		subscriptions[topic] = subscriptions[topic] || [];
+		if(!hasSubscription(topic, client)){
+			subscriptions[topic].push(client);
+		}
+	},
+
+	//	Send notifications to subscribers
+	publish = function (topic, message) {
+		console.log("publish", topic, message);
+		for (var key in subscriptions) {
+			for(var j = 0; j < subscriptions[key].length; j += 1) {
+				sendMessage(subscriptions[key][j], createResponse("diff", message));
+			}
+		}
+	},
+
+	//	Sens a message to a client
+	sendMessage = function(client, message){
+		if(client && client.connection){
+			client.connection.write(message);
+		}
 	};
 
+
+/*
+	Message format
+
+	{
+		type,
+
+	}
+
+*/
+
+
 //	Monitor connections
-dataPortal.on('connection', function(conn) {
-	var index = clients.push(conn);
+dataPortal.on('connection', function(connection) {
+	var index = clients.push({
+		connection: connection
+	});
 	console.log("Connected", index, clients.length);
 
 	//	Send the test data
-	conn.write(createResponse("data", {
+	connection.write(createResponse("data", {
 		data: testData,
 		hash: hash(testData)
 	}));
 
 	//	When we get a message
-    conn.on('data', function(message) {
+    connection.on('data', function(message) {
     	var result = JSON.parse(message);
 
-    	//	Create a response.
-        var response = createResponse("diff", {
-        	diff: result.diff,
-        	hash: result.hash
-        });
 
-        //	Broadcast to all clients
-        for(var i = 0; i < clients.length; i += 1) {
-        	if(clients[i]){
-				clients[i].write(response);
-			} else {
-				console.log("lost client", i);
-				clients.splice(i);
-			}
-        }
+    	if(result.type == "subscribe") {
+    		subscribe(result.topic, clients[index]);
+    	} else if(result.type == "publish") {
+    		publish(result.topic, result.message);
+    	} else {
+
+	    	//	Create a response.
+	        var response = createResponse("diff", {
+	        	diff: result.diff,
+	        	hash: result.hash
+	        });
+
+	        //	Broadcast to all clients
+	        for(var i = 0; i < clients.length; i += 1) {
+	        	sendMessage(clients[i], response);
+	        }
+
+		}
+
+
+
+
+
     });
 
-    conn.on('close', function() {
+    connection.on('close', function() {
     	clients.splice(index);
     });
 });

@@ -1,0 +1,208 @@
+<html>
+<head>
+	<title></title>
+	<script type="text/javascript" src="js/jsondiffpatch.js"></script>
+	<script type="text/javascript" src="js/sockjs-1.0.3.js"></script>
+	<script type="text/javascript" src="js/jquery-1.11.3.js"></script>
+	<script type="text/javascript" src="js/hash.js"></script>
+	<script type="text/javascript" src="js/knockout-3.3.0.js"></script>
+</head>
+<body>
+
+<!--
+
+<button id="test">Send data</button>
+<button id="testDelete">Send delete data</button>
+<hr/>
+<textarea id="log" style="width: 24rem; height: 16rem"></textarea>
+<div id="error"></div>
+<script>
+var testData = {},
+	sock = new SockJS('http://192.168.0.20:9999/dataPortal');
+
+sock.onopen = function() {
+	console.log('open');
+};
+
+sock.onmessage = function(e){
+	var message = JSON.parse(e.data);
+	console.log('message', message, message.type);
+	if(message.type == "data") {
+		testData = message.data;
+	} else if(message.type == "diff") {
+		//	Conditionally patch the data
+		if(hash(testData) !== message.hash) {
+			console.log("patch diff", message.diff);
+			jsondiffpatch.patch(testData, message.diff);
+		} else {
+			console.log("hash already matches, no patch");
+		}
+	}
+
+	//	Update log with data
+	$('#log').val(JSON.stringify(testData));
+};
+
+sock.onclose = function() {
+	console.log('close');
+};
+
+//	Click the test button to see the magic
+$('#test').click(function(){
+	//	Clone object and add something
+	var newTestData = {};
+	jsondiffpatch.patch(newTestData, jsondiffpatch.diff({}, testData));
+	newTestData.c = {f:"minor"};
+	var delta = jsondiffpatch.diff(testData, newTestData);
+	//	Patch it, so only other clients need to patch
+	testData = newTestData;
+	//	Send it
+	sock.send(JSON.stringify({
+		diff: delta,
+		hash: hash(newTestData)
+	}));
+});
+
+//	Click the test button to see the magic
+$('#testDelete').click(function(){
+	//	Clone object and add something
+	var newTestData = {};
+	jsondiffpatch.patch(newTestData, jsondiffpatch.diff({}, testData));
+	delete newTestData.c;
+	var delta = jsondiffpatch.diff(testData, newTestData);
+	//	Patch it, so only other clients need to patch
+	testData = newTestData;
+	//	Send it
+	sock.send(JSON.stringify({
+		diff: delta,
+		hash: hash(newTestData)
+	}));
+});
+
+
+</script>
+
+-->
+
+<script>
+/*
+	## Ideal way to share data
+
+	var myObject = {
+			thisis: "an object"
+		},
+		myPortal = new DataPortal("myObject", myObject);
+
+
+	//	Update myObject
+	myObject.something = "a thing";
+
+	//	Let the portal know
+	myPortal.publish(myObject);
+
+*/
+</script>
+
+<button id="subscribe">Subscribe to myObject</button>
+<button id="publish">Publish changed data</button>
+
+
+<script>
+var DataPortal = function(name, obj){
+	var self = this,
+		originalObj = JSON.parse(JSON.stringify(obj)),
+		publish = function(newObj){
+			var delta = jsondiffpatch.diff(originalObj, newObj);
+			//	Send it
+			sock.send(JSON.stringify({
+				type: "publish",
+				topic: name,
+				message: {
+					diff: delta,
+					hash: hash(newObj)
+				}
+			}));
+		},
+		subscribe = function(topic){
+			//	Send it
+			sock.send(JSON.stringify({
+				type: "subscribe",
+				topic: topic
+			}));
+		};
+
+	publish(obj);
+
+	return {
+		publish: publish,
+		subscribe: subscribe
+	};
+};
+</script>
+
+
+<script>
+var myPortal;
+
+$('#subscribe').click(function(){
+
+});
+
+</script>
+
+
+<script>
+//	NOTE: We can only have 1 connection to sockjs
+var sock = new SockJS('http://192.168.0.20:9999/dataPortal');
+
+sock.onopen = function() {
+	console.log('open');
+
+	var myObject = {
+			thisis: "an object"
+		};
+
+	myPortal = new DataPortal("myObject", myObject);
+
+	//	Update myObject
+	myObject.something = "a thing";
+
+	//	Let the portal know
+	myPortal.publish(myObject);
+
+
+};
+
+sock.onmessage = function(e){
+	var message = JSON.parse(e.data);
+	console.log('message', message, message.type);
+
+	if(message.type == "data") {
+		//testData = message.data;
+		console.log("got data", message);
+	} else if(message.type == "diff") {
+		console.log("got diff", message);
+		//	Conditionally patch the data
+		/*	
+		if(hash(testData) !== message.hash) {
+			console.log("patch diff", message.diff);
+			jsondiffpatch.patch(testData, message.diff);
+		} else {
+			console.log("hash already matches, no patch");
+		}
+		*/
+	}
+
+	//	Update log with data
+	//$('#log').val(JSON.stringify(testData));
+};
+
+sock.onclose = function() {
+	console.log('close');
+};
+
+</script>
+
+
+</body>
+</html>
