@@ -1,0 +1,25 @@
+{
+  "name": "dataportal",
+  "version": "1.0.0",
+  "description": "NOTE: These are some semi-random thoughts on what Dataportal could be used for, and how it might work.",
+  "main": "server.js",
+  "dependencies": {
+    "jsondiffpatch": "^0.1.37",
+    "sockjs": "^0.3.15"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jsguy/dataportal.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jsguy/dataportal/issues"
+  },
+  "homepage": "https://github.com/jsguy/dataportal#readme"
+}
