@@ -108,53 +108,183 @@ $('#testDelete').click(function(){
 
 
 <script>
+//	NOTE: We can only have 1 connection to sockjs
+var sock = new SockJS('http://localhost:9999/dataPortal');
 
-var portals = [];
+/*
+sock.onopen = function() {
 
-var DataPortal = function(name, obj){
-	var self = this,
-		originalObj = JSON.parse(JSON.stringify(obj)),
-		publish = function(newObj){
-			var delta = jsondiffpatch.diff(originalObj, newObj);
-			//	Send it
-			sock.send(JSON.stringify({
-				type: "publish",
-				topic: name,
-				message: {
-					diff: delta,
-					hash: hash(newObj)
-				}
-			}));
-		},
-		subscribe = function(topic){
-			console.log("subscribe", topic);
-			//	Send it
-			sock.send(JSON.stringify({
-				type: "subscribe",
-				topic: topic
-			}));
-		};
 
-	//	Always publish when created
-	publish(obj);
 
-	portals.push(this);
+	myPortal = new DataPortal("myObject", myObject);
+	//	Update myObject
+	myObject.something = "a thing";
+	//	Let the portal know
+	myPortal.publish(myObject);
 
-	//	Allow pub/sub
-	return {
-		publish: publish,
-		subscribe: subscribe
-	};
+
+
 };
+*/
+// sock.onmessage = function(e){
+// 	var message = JSON.parse(e.data);
+// 	if(message.type == "data") {
+// 		//testData = message.data;
+// 		console.log("got data", message);
+// 	} else if(message.type == "diff") {
+// 		console.log("got diff", message);
+// 		//	Conditionally patch the data
+			
+// 		if(hash(testData) !== message.hash) {
+// 			console.log("patch diff", message.diff);
+// 			jsondiffpatch.patch(testData, message.diff);
+// 		} else {
+// 			console.log("hash already matches, no patch");
+// 		}
+		
+// 	}
+
+// 	//	Update log with data
+// 	//$('#log').val(JSON.stringify(testData));
+// };
+
+sock.onclose = function() {
+	console.log('close');
+};
+
+</script>
+
+<script>
+
+
+/*
+	We need a data portal factoy that knows when the socket is ready, and can call the 'ready' methods on each data portal.
+
+*/
+(function(win, sock){
+	var portals = [],
+		isReady = false;
+
+	var DataPortal = function(name, obj){
+		var self = this,
+			originalObj = JSON.parse(JSON.stringify(obj)),
+			readyFunctions = [],
+			publish = function(newObj){
+				var delta = jsondiffpatch.diff(originalObj, newObj);
+				//	Send it
+				sock.send(JSON.stringify({
+					type: "publish",
+					topic: name,
+					message: {
+						diff: delta,
+						hash: hash(newObj)
+					}
+				}));
+			},
+			//	Subscribe to messages
+			//	TODO: cache the last message, so we can always 
+			//	give new subscribers the JSON object.
+			subscribe = function(topic){
+				console.log("subscribe", topic);
+				//	Send it
+				sock.send(JSON.stringify({
+					type: "subscribe",
+					topic: topic
+				}));
+			},
+			//	When the socket is ready
+			ready = function(cb){
+				if(isReady) {
+					cb(self);
+				} else {
+					readyFunctions.push({cb: cb, self: self});
+				}
+			};
+
+		//	Always publish when created
+		//publish(obj);
+
+		//	Allow pub/sub
+		return {
+			publish: publish,
+			subscribe: subscribe,
+			ready: ready,
+			readyFunctions: readyFunctions
+		};
+	};
+
+	//	Handle sock open
+	sock.onopen = function() {
+		console.log('sock open');
+		isReady = true;
+
+		//	Loop on portals and call each ready method
+		for(var i = 0; i < portals.length; i += 1) {
+			console.log('ready', portals[i]);
+			for(var j = 0; j < portals[i].readyFunctions.length; j += 1){
+				portals[i].readyFunctions[j].cb(portals[i].readyFunctions[j].self);
+			}
+		}
+	};
+
+
+	//	Handle messages
+	sock.onmessage = function(e){
+		var message = JSON.parse(e.data);
+		if(message.type == "data") {
+			//testData = message.data;
+			console.log("got data", message);
+		} else if(message.type == "diff") {
+			console.log("got diff", message);
+			//	Conditionally patch the data
+			/*	
+			if(hash(testData) !== message.hash) {
+				console.log("patch diff", message.diff);
+				jsondiffpatch.patch(testData, message.diff);
+			} else {
+				console.log("hash already matches, no patch");
+			}
+			*/
+		}
+
+		//	Update log with data
+		//$('#log').val(JSON.stringify(testData));
+	};
+
+
+	win.DataPortalFactory = function(name, object){
+		var myPortal = new DataPortal(name, object);
+		portals.push(myPortal);
+		return myPortal;
+	}
+
+}(window, sock));
+
+</script>
+
+<script>
+var myObject = {
+		thisis: "an object"
+	},
+	mp = DataPortalFactory('myobject', myObject);
+
+mp.ready(function(portal){
+	console.log('portal ready', portal);
+	//	Subscribe to and update our object
+	mp.subscribe("myObject");
+	myObject.c = {f:"minor"};
+	mp.publish(myObject);
+})
+
 </script>
 
 
 <script>
+/*
 var myPortal,
 	myObject = {
 		thisis: "an object"
 	};
-
 
 $('#subscribe').click(function(){
 	myPortal.subscribe("myObject");
@@ -164,49 +294,9 @@ $('#publish').click(function(){
 	myObject.c = {f:"minor"};
 	myPortal.publish(myObject);
 });
-
+*/
 </script>
 
-
-<script>
-//	NOTE: We can only have 1 connection to sockjs
-var sock = new SockJS('http://localhost:9999/dataPortal');
-
-sock.onopen = function() {
-	myPortal = new DataPortal("myObject", myObject);
-	//	Update myObject
-	myObject.something = "a thing";
-	//	Let the portal know
-	myPortal.publish(myObject);
-};
-
-sock.onmessage = function(e){
-	var message = JSON.parse(e.data);
-	if(message.type == "data") {
-		//testData = message.data;
-		console.log("got data", message);
-	} else if(message.type == "diff") {
-		console.log("got diff", message);
-		//	Conditionally patch the data
-		/*	
-		if(hash(testData) !== message.hash) {
-			console.log("patch diff", message.diff);
-			jsondiffpatch.patch(testData, message.diff);
-		} else {
-			console.log("hash already matches, no patch");
-		}
-		*/
-	}
-
-	//	Update log with data
-	//$('#log').val(JSON.stringify(testData));
-};
-
-sock.onclose = function() {
-	console.log('close');
-};
-
-</script>
 
 
 </body>
