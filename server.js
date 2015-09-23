@@ -49,23 +49,26 @@ var http = require('http'),
 	    return JSON.stringify(response);
 	},
 
-	hasSubscription = function(topic, client){
+	hasSubscription = function(topic, index){
 		var hasSub = false;
-		if(subscriptions[topic]) {}
-		for(var i = 0; i < subscriptions[topic].length; i += 1) {
-			if(subscriptions[topic][i] === client) {
-				hasSub = true;
+		if(subscriptions[topic]) {
+			for(var i = 0; i < subscriptions[topic].length; i += 1) {
+				if(subscriptions[topic][i] === index) {
+					hasSub = true;
+				}
 			}
 		}
 		return hasSub;
 	},
 
-	//	Subscribe a client to a topic
-	subscribe = function(topic, client){
-		console.log("subscribe", topic, client);
+	//	Subscribe a client index to a topic
+	subscribe = function(topic, index){
+		console.log("subscribe", topic);
 		subscriptions[topic] = subscriptions[topic] || [];
-		if(!hasSubscription(topic, client)){
-			subscriptions[topic].push(client);
+		if(!hasSubscription(topic, index)){
+			subscriptions[topic].push(index);
+		} else {
+			console.log("Didn't subscribe", topic, index);
 		}
 	},
 
@@ -73,8 +76,10 @@ var http = require('http'),
 	publish = function (topic, message) {
 		console.log("publish", topic, message);
 		for (var key in subscriptions) {
+			console.log(key);
 			for(var j = 0; j < subscriptions[key].length; j += 1) {
-				sendMessage(subscriptions[key][j], createResponse("diff", message));
+				console.log("found client index", subscriptions[key][j]);
+				sendMessage(clients[subscriptions[key][j]], createResponse("diff", message));
 			}
 		}
 	},
@@ -83,27 +88,20 @@ var http = require('http'),
 	sendMessage = function(client, message){
 		if(client && client.connection){
 			client.connection.write(message);
+		} else {
+			console.log("ERROR - could not send message", client);
 		}
 	};
 
-
-/*
-	Message format
-
-	{
-		type,
-
-	}
-
-*/
-
-
 //	Monitor connections
 dataPortal.on('connection', function(connection) {
-	var index = clients.push({
+	clients.push({
 		connection: connection
 	});
-	console.log("Connected", index, clients.length);
+
+	var index = clients.length - 1;
+
+	console.log("Connected", index);
 
 	//	Send the test data
 	connection.write(createResponse("data", {
@@ -117,11 +115,10 @@ dataPortal.on('connection', function(connection) {
 
 
     	if(result.type == "subscribe") {
-    		subscribe(result.topic, clients[index]);
+    		subscribe(result.topic, index);
     	} else if(result.type == "publish") {
     		publish(result.topic, result.message);
     	} else {
-
 	    	//	Create a response.
 	        var response = createResponse("diff", {
 	        	diff: result.diff,
@@ -134,15 +131,10 @@ dataPortal.on('connection', function(connection) {
 	        }
 
 		}
-
-
-
-
-
     });
 
     connection.on('close', function() {
-    	clients.splice(index);
+    	//clients.splice(index);
     });
 });
 

@@ -108,6 +108,9 @@ $('#testDelete').click(function(){
 
 
 <script>
+
+var portals = [];
+
 var DataPortal = function(name, obj){
 	var self = this,
 		originalObj = JSON.parse(JSON.stringify(obj)),
@@ -124,6 +127,7 @@ var DataPortal = function(name, obj){
 			}));
 		},
 		subscribe = function(topic){
+			console.log("subscribe", topic);
 			//	Send it
 			sock.send(JSON.stringify({
 				type: "subscribe",
@@ -131,8 +135,12 @@ var DataPortal = function(name, obj){
 			}));
 		};
 
+	//	Always publish when created
 	publish(obj);
 
+	portals.push(this);
+
+	//	Allow pub/sub
 	return {
 		publish: publish,
 		subscribe: subscribe
@@ -142,10 +150,19 @@ var DataPortal = function(name, obj){
 
 
 <script>
-var myPortal;
+var myPortal,
+	myObject = {
+		thisis: "an object"
+	};
+
 
 $('#subscribe').click(function(){
+	myPortal.subscribe("myObject");
+});
 
+$('#publish').click(function(){
+	myObject.c = {f:"minor"};
+	myPortal.publish(myObject);
 });
 
 </script>
@@ -153,30 +170,18 @@ $('#subscribe').click(function(){
 
 <script>
 //	NOTE: We can only have 1 connection to sockjs
-var sock = new SockJS('http://192.168.0.20:9999/dataPortal');
+var sock = new SockJS('http://localhost:9999/dataPortal');
 
 sock.onopen = function() {
-	console.log('open');
-
-	var myObject = {
-			thisis: "an object"
-		};
-
 	myPortal = new DataPortal("myObject", myObject);
-
 	//	Update myObject
 	myObject.something = "a thing";
-
 	//	Let the portal know
 	myPortal.publish(myObject);
-
-
 };
 
 sock.onmessage = function(e){
 	var message = JSON.parse(e.data);
-	console.log('message', message, message.type);
-
 	if(message.type == "data") {
 		//testData = message.data;
 		console.log("got data", message);
