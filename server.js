@@ -31,20 +31,17 @@ var http = require('http'),
 
 	//	Create a response.
 	//	TODO: define a standard for this - also don't trust the clients!.
-	createResponse = function(type, data){
-		var response = {};
+	createResponse = function(type, topic, data){
+		var response = {
+			type: type,
+			topic: topic
+		};
 		if(type == "diff") {
-	        response = {
-	        	type: type,
-	        	diff: data.diff,
-	        	hash: data.hash
-	        };
+	        response.diff = data.diff;
+	        response.hash = data.hash;
 	    } else if(type == "data") {
-			response = {
-	        	type: type,
-	        	data: data.data,
-	        	hash: data.hash
-	        };
+			response.data = data.data;
+	        response.hash = data.hash;
 	    }
 	    return JSON.stringify(response);
 	},
@@ -79,7 +76,7 @@ var http = require('http'),
 			console.log(key);
 			for(var j = 0; j < subscriptions[key].length; j += 1) {
 				console.log("found client index", subscriptions[key][j]);
-				sendMessage(clients[subscriptions[key][j]], createResponse("diff", message));
+				sendMessage(clients[subscriptions[key][j]], createResponse("diff", topic, message));
 			}
 		}
 	},
@@ -104,7 +101,7 @@ dataPortal.on('connection', function(connection) {
 	console.log("Connected", index);
 
 	//	Send the test data
-	connection.write(createResponse("data", {
+	connection.write(createResponse("data", "testData", {
 		data: testData,
 		hash: hash(testData)
 	}));
@@ -120,7 +117,7 @@ dataPortal.on('connection', function(connection) {
     		publish(result.topic, result.message);
     	} else {
 	    	//	Create a response.
-	        var response = createResponse("diff", {
+	        var response = createResponse("diff", result.topic, {
 	        	diff: result.diff,
 	        	hash: result.hash
 	        });

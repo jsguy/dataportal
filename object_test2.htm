@@ -9,99 +9,92 @@
 </head>
 <body>
 
+<script>
+
+//    DOS: De-coupled Object Subscribable (pub/sub, with value check, to break infinite loops), 
+//  see future article on jsguy.com!
+//  This allows de-coupled updating of elements and models in a widget, similar to KO, AngularJS, etc...
+//	Differences: 
+//
+//	1. We don't dictate the use of templates, or how things are rendered, you can use any templaing system you like
+//	2. We encourage progressive enhancement and unobtrusiveness instead of a mix of templates and obtrusiveness
+//
+var DOS = function (value) {
+	var self = function(val){
+			if(typeof val !== "undefined") {
+				return self.set(val);
+			}
+			return self.get();
+
+		},
+		subs = [],
+		value = value,
+		prevValue,
+		//	Send notifications to subscribers
+		notify = function (value) {
+			var i;
+			for (i = 0; i < subs.length; i += 1) {
+				subs[i].func.apply(subs[i].context, [value]);
+			}
+		};
+
+	//  Set a value - trigger notifications
+	//  Will only trigger when the value has actually changed - this prevents infinite loops
+	self.set = function (val) {
+		value = val;
+		if (prevValue !== value) {
+			prevValue = value;
+			notify(value);
+		}
+	};
+
+	self.trigger = function (val) {
+		notify((val !== undefined) ? val : value);
+	};
+
+	self.get = function () {
+		return value;
+	};
+
+	self.subscribe = function (func, context) {
+		subs.push({ func: func, context: context || self });
+	};
+
+	//	
+	return self;
+	// function(val){
+	// 	if(typeof val !== "undefined") {
+	// 		return self.set(val);
+	// 	}
+	// 	return self.get();
+	// }
+};
+
+//	Create a new subscribable object
+var dos = function(value) {
+	return new DOS(value);
+};
+
+
+var obj = new DOS({hello: "world"});
+
+obj.subscribe(function(value){
+	console.log('value', value);
+});
+
+//console.log(obj());
+
+obj({gday: "universe"});
+
+//console.log(obj());
+
+
+
+</script>
+
+
 <!--
 
-<button id="test">Send data</button>
-<button id="testDelete">Send delete data</button>
-<hr/>
-<textarea id="log" style="width: 24rem; height: 16rem"></textarea>
-<div id="error"></div>
-<script>
-var testData = {},
-	sock = new SockJS('http://192.168.0.20:9999/dataPortal');
-
-sock.onopen = function() {
-	console.log('open');
-};
-
-sock.onmessage = function(e){
-	var message = JSON.parse(e.data);
-	console.log('message', message, message.type);
-	if(message.type == "data") {
-		testData = message.data;
-	} else if(message.type == "diff") {
-		//	Conditionally patch the data
-		if(hash(testData) !== message.hash) {
-			console.log("patch diff", message.diff);
-			jsondiffpatch.patch(testData, message.diff);
-		} else {
-			console.log("hash already matches, no patch");
-		}
-	}
-
-	//	Update log with data
-	$('#log').val(JSON.stringify(testData));
-};
-
-sock.onclose = function() {
-	console.log('close');
-};
-
-//	Click the test button to see the magic
-$('#test').click(function(){
-	//	Clone object and add something
-	var newTestData = {};
-	jsondiffpatch.patch(newTestData, jsondiffpatch.diff({}, testData));
-	newTestData.c = {f:"minor"};
-	var delta = jsondiffpatch.diff(testData, newTestData);
-	//	Patch it, so only other clients need to patch
-	testData = newTestData;
-	//	Send it
-	sock.send(JSON.stringify({
-		diff: delta,
-		hash: hash(newTestData)
-	}));
-});
-
-//	Click the test button to see the magic
-$('#testDelete').click(function(){
-	//	Clone object and add something
-	var newTestData = {};
-	jsondiffpatch.patch(newTestData, jsondiffpatch.diff({}, testData));
-	delete newTestData.c;
-	var delta = jsondiffpatch.diff(testData, newTestData);
-	//	Patch it, so only other clients need to patch
-	testData = newTestData;
-	//	Send it
-	sock.send(JSON.stringify({
-		diff: delta,
-		hash: hash(newTestData)
-	}));
-});
-
-
-</script>
-
--->
-
-<script>
-/*
-	## Ideal way to share data
-
-	var myObject = {
-			thisis: "an object"
-		},
-		myPortal = new DataPortal("myObject", myObject);
-
-
-	//	Update myObject
-	myObject.something = "a thing";
-
-	//	Let the portal know
-	myPortal.publish(myObject);
-
-*/
-</script>
 
 <button id="subscribe">Subscribe to myObject</button>
 <button id="publish">Publish changed data</button>
@@ -352,7 +345,7 @@ $('#publish').click(function(){
 */
 </script>
 
-
+-->
 
 </body>
 </html>
