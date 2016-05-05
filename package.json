@@ -1,6 +1,6 @@
 {
   "name": "dataportal",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "NOTE: These are some semi-random thoughts on what Dataportal could be used for, and how it might work.",
   "main": "server.js",
   "dependencies": {

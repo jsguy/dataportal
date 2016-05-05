@@ -1,0 +1,65 @@
+<html>
+<head>
+	<title></title>
+	<script type="text/javascript" src="js/jsondiffpatch.js"></script>
+	<script type="text/javascript" src="js/sockjs-1.0.3.js"></script>
+	<script type="text/javascript" src="js/jquery-1.11.3.js"></script>
+	<script type="text/javascript" src="js/hash.js"></script>
+	<script src="js/dataportal.js?url=http://localhost:9999/dataPortal"></script>
+	<script src="js/caretpos.js"></script>
+	<style>
+		textarea {width: 50rem; height: 12rem;}
+	</style>
+</head>
+<body>
+
+<textarea id="json">{"me": {"an": "object"}, "stuff": ["a", 2, "c"]}</textarea>
+<hr/>
+<button id="publish">Publish changed data</button>
+
+<script>
+var obj,
+	ta = $("#json").get(0),
+	//	Grab or set the value from the textarea
+	syncValue = function(value){
+		if(value) {
+			obj = value;
+			$('#json').val(JSON.stringify(obj));
+		} else {
+			obj = JSON.parse($('#json').val());
+		}
+	},
+	mp;
+
+syncValue();
+
+//	Create a portal for this topic
+mp = dataPortal(obj, "objtopic", {
+	onready: function(portal){
+		//	Subscribe to and update our object
+		portal.subscribe(function(value){
+			syncValue(value);
+		});
+
+		//	Modify our object and publish it
+		obj.c = {"f":"minor_" + (new Date()).getTime()};
+		portal.publish(obj);
+	}, 
+	onclose: function(){
+		//	Reload if we lose the connection
+		setTimeout(function(){
+			document.location.reload();
+		}, 500);
+	}
+	//,onpatch: function(){/* Any patching? */ }
+});
+
+$('#publish').click(function(){
+	syncValue();
+	mp.publish(obj);
+});
+</script>
+
+
+</body>
+</html>
