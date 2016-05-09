@@ -1,9 +1,9 @@
 //	Knockout dataportal integration
 //	Requires the mapping plugin: http://knockoutjs.com/documentation/plugins-mapping.html
-ko.dataPortal = function(root, isInitiallyDirty) {
+ko.dataPortal = function(root, topic) {
 	var _initialized,
 		_fromPatch = false,
-    	mp = dataPortal(root, "objtopic", {
+    	mp = dataPortal(root, topic, {
 			onpatch: function(object, message){
 				_fromPatch = true;
 				var myObj = ko.toJS(object);
@@ -33,11 +33,14 @@ ko.dataPortal = function(root, isInitiallyDirty) {
 };
 
 //	Passthough for making this a dataPortalised view model
-ko.applyPortalBindings = function(vm){
+ko.applyPortalBindings = function(topic, vm){
 	//	Setup data portal functionality
-	vm.__dataPortal = new ko.dataPortal(vm);
+	vm.__dataPortal = new ko.dataPortal(vm, topic);
 
-	ko.applyBindings.apply(ko, arguments);
+	//	Don't need the topic
+    var args = Array.prototype.slice.call(arguments, 1);
+
+	ko.applyBindings.apply(ko, args);
 }
 
 //	Always ignore the dataPortal and KO mapping
