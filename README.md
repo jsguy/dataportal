@@ -1,7 +1,6 @@
 ![alt text](https://github.com/jsguy/dataportal/raw/master/logo.png "Dataportal logo")
-# Dataportal
 
-Transfer JSON efficiently across websockets to multiple clients
+Share JSON across websockets to multiple clients
 
 ## Um, why?
 

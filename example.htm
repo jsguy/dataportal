@@ -5,7 +5,7 @@
 	<script type="text/javascript" src="js/sockjs-1.0.3.js"></script>
 	<script type="text/javascript" src="js/jquery-1.11.3.js"></script>
 	<script type="text/javascript" src="js/hash.js"></script>
-	<script src="js/dataportal.js?url=http://localhost:9999/dataPortal"></script>
+	<script src="js/dataportal.js?url=http://local.mac:9999/dataPortal"></script>
 	<script src="js/caretpos.js"></script>
 	<style>
 		textarea {width: 50rem; height: 12rem;}
@@ -49,7 +49,7 @@ mp = dataPortal(obj, "objtopic", {
 		//	Reload if we lose the connection
 		setTimeout(function(){
 			document.location.reload();
-		}, 500);
+		}, 2500);
 	}
 	//,onpatch: function(){/* Any patching? */ }
 });

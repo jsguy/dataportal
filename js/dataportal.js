@@ -92,7 +92,7 @@
 
 		self.patch = function(message) {
 			if(args.onpatch) {
-				args.onpatch(message);
+				args.onpatch(objectValue, message);
 			} else {
 				//	Here we pacth the object
 				jsondiffpatch.patch(objectValue, message.diff);
@@ -125,6 +125,13 @@
 		if(args.onclose) {
 			self.close(args.onclose);
 		}
+
+
+		//	Setup one empty subscription by default, so we get just the diffs
+		self.ready(function(portal){
+			portal.subscribe(function(){});
+		});
+
 
 		return self;
 	};
