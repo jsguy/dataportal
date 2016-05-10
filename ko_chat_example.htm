@@ -6,45 +6,28 @@
 	<script type="text/javascript" src="js/jquery-1.11.3.js"></script>
 	<script type="text/javascript" src="js/hash.js"></script>
 	<script type="text/javascript" src="js/knockout-3.3.0.js"></script>
+	<script type="text/javascript" src="js/knockout.stopbinding.js"></script>
 	<script type="text/javascript" src="js/knockout.mapping-2.4.1.js"></script>
 	<script type="text/javascript" src="js/knockout.dataportal-0.0.1.js"></script>
+    <!-- Set the url parameter to the IP address or URL of your server -->
 	<script src="js/dataportal.js?url=http://localhost:9999/dataPortal"></script>
-	<style>
-		body {font-family: sans-serif; font-size: 62.5%;}
-		.box {margin: 1rem 0;}
-		.box label {font-weight: bold; display: inline-block; width: 6rem; text-align: right; padding-right: 0.5rem;}
-		.all-chats {height: 20rem; background: #ccc; padding: 1rem 0; overflow-y: scroll }
-		.chat-line {width: 30rem;}
-	</style>
+	<link rel="stylesheet" type="text/css" href="css/chatstyle.css">
 </head>
 <body>
 
 <div class="js-name box">
-    <label>Your name</label><input data-bind="value: name" />
+    <label>Your name</label><input data-bind="value: name" /><button>Set</button>
 </div>
-
+<!-- ko stopBinding: true -->
 <div class="js-chats box all-chats" data-bind="foreach: chats">
-    <div>
-    	<label data-bind="text: name() + ' ' + time()"></label>
-    	<span data-bind="text: text"></span>
-    </div>
+    <div><label data-bind="text: name() + ' ' + time()"></label><span data-bind="text: text"></span></div>
 </div>
-
-<div class="js-chat box">
-    <div>
-    	<label>Chat</label>
-    	<input class="chat-line" data-bind="textInput: chat, event: {keypress: send}" />
-    </div>
+<!-- /ko -->
+<div class="js-chat box" data-bind="visible: !!name()">
+    <label>Chat</label><input class="chat-line" data-bind="textInput: chat, event: {keypress: send}"/>
 </div>
 
 <script>
-//	Name model
-var NameViewModel = function() {
-    this.name = ko.observable();
-}, nameVM = new NameViewModel();
-ko.applyBindings(nameVM, $(".js-name").get(0));
-
-
 //	Chat channel model
 var Chat = function(name, text, time) {
 	var timeObj = new Date(time);
@@ -62,20 +45,20 @@ var Chat = function(name, text, time) {
 },vm = new ViewModel();
 ko.applyPortalBindings("chatTopic", vm, $(".js-chats").get(0));
 
-
-//	Chat text model
-var ChatViewModel = function(chats) {
+//	Chat name and text model
+var ChatViewModel = function() {
 	var me = this;
+    me.name = ko.observable();
     me.chat = ko.observable();
     this.send = function(d, e){
 		if(e.keyCode === 13) {
-        	vm.addChat(nameVM.name(), me.chat(), (new Date()).getTime());
+        	vm.addChat(me.name(), me.chat(), (new Date()).getTime());
 	    	me.chat("");
 	    }
 	    return true;
     }
 },chatVM = new ChatViewModel();
-ko.applyBindings(chatVM, $(".js-chat").get(0));
+ko.applyBindings(chatVM);
 </script>
 
 </body>
