@@ -43,10 +43,15 @@
 		topic = topic || "TOPIC-NOT-SET";
 		args = args || {};
 
+		args.autoPatch = typeof args.autoPatch !== "undefined"? args.autoPatch: true;
+
 		var self = this,
 			guid = generateGuid(),
 			objectValue = obj,
-			originalObj = JSON.parse(JSON.stringify(obj));
+			originalObj = JSON.parse(JSON.stringify(obj)),
+			//	Create a custom patcher object - can pass in options, etc
+			//	Ref: https://github.com/benjamine/jsondiffpatch#options
+			jdp = jsondiffpatch.create();
 
 		self.readyFunctions = [];
 		self.closeFunctions = [];
@@ -59,7 +64,12 @@
 		};
 
 		self.publish = function(newObj){
-			var delta = jsondiffpatch.diff(originalObj, newObj);
+			var testObj = JSON.parse(JSON.stringify(originalObj)),
+				delta = jdp.diff(testObj, newObj);
+
+			//	Patch it
+			self.patch({diff: delta});
+
 			//	Send it
 			sock.send(JSON.stringify({
 				type: "publish",
@@ -75,11 +85,12 @@
 		//	Subscribe to messages
 		//	TODO: cache the last message, so we can always 
 		//	give new subscribers the JSON object.
-		self.subscribe = function(func){
+		self.subscribe = function(func, autoPatch){
 			subscriptions[topic] = subscriptions[topic] || [];
 			subscriptions[topic].push({
 				notify: func,
-				portal: self
+				portal: self,
+				autoPatch: autoPatch
 			});
 
 			//	Send it
@@ -91,12 +102,15 @@
 		};
 
 		self.patch = function(message) {
+			//	Here we pacth the object, either user defined or native
 			if(args.onpatch) {
 				args.onpatch(objectValue, message);
 			} else {
-				//	Here we pacth the object
-				jsondiffpatch.patch(objectValue, message.diff);
+				jdp.patch(objectValue, message.diff);
 			}
+
+			originalObj = JSON.parse(JSON.stringify(objectValue));
+
 			//	Tell subscribers
 			if(subscriptions[topic]) {
 				for(var i = 0; i < subscriptions[topic].length; i += 1) {
@@ -127,10 +141,12 @@
 		}
 
 
-		//	Setup one empty subscription by default, so we get just the diffs
-		self.ready(function(portal){
-			portal.subscribe(function(){});
-		});
+		//	Setup one empty subscription by default, so we autoPatch
+		if(args.autoPatch) {
+			self.ready(function(portal){
+				portal.subscribe(function(){}, true);
+			});
+		}
 
 
 		return self;
@@ -154,6 +170,7 @@
 	sock.onmessage = function(e){
 		var message = JSON.parse(e.data),
 			subs, i;
+
 		if(message.type == "data") {
 			subs = getSubscribedPortals(message.topic);
 			//	Set the data
@@ -164,7 +181,7 @@
 			subs = getSubscribedPortals(message.topic);
 			//	Allow the portal to patch the data
 			for(i = 0; i < subs.length; i += 1) {
-				if(subs[i] && subs[i].portal){
+				if(subs[i] && subs[i].portal && subs[i].autoPatch){
 					subs[i].portal.patch(message);
 				}
 			}

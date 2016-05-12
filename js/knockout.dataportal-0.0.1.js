@@ -1,12 +1,20 @@
 //	Knockout dataportal integration
 //	Requires the mapping plugin: http://knockoutjs.com/documentation/plugins-mapping.html
 ko.dataPortal = function(root, topic) {
+	var watchObj = ko.unwrap(root);
+	delete watchObj["__ko_mapping__"];
+	delete watchObj["__dataPortal"];
+
 	var _initialized,
 		_fromPatch = false,
-    	mp = dataPortal(root, topic, {
+    	mp = dataPortal(watchObj, topic, {
 			onpatch: function(object, message){
 				_fromPatch = true;
-				var myObj = ko.toJS(object);
+				var myObj = ko.toJS(ko.unwrap(object));
+
+				delete myObj["__ko_mapping__"];
+				delete myObj["__dataPortal"];
+				
 				jsondiffpatch.patch(myObj, message.diff);
 				ko.mapping.fromJS(myObj, {}, root);
 				_fromPatch = false;
@@ -23,6 +31,8 @@ ko.dataPortal = function(root, topic) {
 		var pvalue = JSON.parse(ko.toJSON(root));
 		delete pvalue["__ko_mapping__"];
 		delete pvalue["__dataPortal"];
+
+		console.log(JSON.stringify(pvalue, null, 4));
 
 		mp.publish(pvalue);
 

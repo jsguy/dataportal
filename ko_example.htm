@@ -9,7 +9,7 @@
 	<script type="text/javascript" src="js/knockout.mapping-2.4.1.js"></script>
 	<script type="text/javascript" src="js/knockout.dataportal-0.0.1.js"></script>
     <!-- Set the url parameter to the IP address or URL of your server -->
-	<script src="js/dataportal.js?url=http://localhost:9999/dataPortal"></script>
+	<script src="js/dataportal.js?url=http://192.168.3.20:9999/dataPortal"></script>
 	<style>
 		body {font-family: sans-serif; font-size: 62.5%;}
 		.box label {font-weight: bold; display: inline-block; width: 6rem; text-align: right; padding-right: 0.5rem;}
@@ -31,6 +31,7 @@ function Item(id, name) {
 }
 
 var ViewModel = function(items) {
+	this.name = ko.observable("Batman");
     this.items = ko.observableArray([
         new Item("Name", "Bob"),
         new Item("Email", "bob@example.com"),
