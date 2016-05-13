@@ -8,7 +8,7 @@ Share JSON across websockets
 npm install dataportal
 ```
 
-## Gettings started
+## Getting started
 
 Create a dataportal server in node, eg:
 
@@ -19,7 +19,7 @@ require('dataportal')();
 And run it with node - it should now be running on port 32827 - to use the client side:
 
 ```javascript
-<script type="text/javascript" src="build/dataportal.js?url=http://local.mac:32827/dataPortal"></script>
+<script type="text/javascript" src="node_modules/dataportal/build/dataportal.js?url=http://local.mac:32827/dataPortal"></script>
 <script>
 var obj = {"hello": "world"};
 
@@ -38,12 +38,12 @@ mp = dataPortal(obj, "myobject", {
 </html>
 ```
 
-Change "http://local.mac:32827/dataPortal" to the IP address or URL of where you're running your dataportal server.
-This example should log out a message each time the object is published for the "myobject" topic - it should show the save value on the last console.og line in each browser.
+**Note:** Change "http://local.mac:32827/dataPortal" to the IP address or URL of where you're running your dataportal server.
+This example should log out a message each time the object is published for the "myobject" topic - it should show the same value on the last console.log line in each browser.
 
 ## Um, why?
 
-Curiosity - I've seen many other implementations - including what they do in MeteorJS - they all seem unnessecarily complex for something as simple as syncing JSON across a websocket, so this is just an experiement to see if it can be done a little simpler. Obviously this means we haven't implemented any protocols (such as [DDP](https://en.wikipedia.org/wiki/Distributed_Data_Protocol)), but rather just allow object to be syncronised, using [https://github.com/benjamine/jsondiffpatch](jsondiffpatch) for efficiency.
+Curiosity - I've seen many other implementations - including what they do in MeteorJS - they all seem unnecessarily complex for something as simple as syncing JSON across a websocket, so this is just an experiment to see if it can be done a little simpler. Obviously this means we haven't implemented any protocols (such as [DDP](https://en.wikipedia.org/wiki/Distributed_Data_Protocol)), but rather just allow object to be synchronized, using [https://github.com/benjamine/jsondiffpatch](jsondiffpatch) for efficiency.
 As I said, this is an experiment, and so is not meant for production code.
 
 ## Usage
@@ -76,4 +76,4 @@ The portal object controls how your data is shared with the server, you
 
 See the `examples` folder in this repository.
 
-**Note:** The examples included with Dataportal have the url of the server set to "http://local.mac:32827/dataPortal", be sure to adjust that to it uses the IP address or URL of where you're running your dataportal server, for when you test on separate machines.
+**Note:** The examples included with Dataportal have the URL of the server set to "http://local.mac:32827/dataPortal", be sure to adjust that to it uses the IP address or URL of where you're running your dataportal server, for when you test on separate machines.
