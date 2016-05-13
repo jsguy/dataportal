@@ -2,12 +2,20 @@
   "name": "dataportal",
   "version": "0.0.1",
   "description": "NOTE: These are some semi-random thoughts on what Dataportal could be used for, and how it might work.",
-  "main": "server.js",
+  "main": "index.js",
   "dependencies": {
     "jsondiffpatch": "^0.1.37",
     "sockjs": "^0.3.17"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "grunt":  "0.4.x",
+    "grunt-cli":  "0.1.9",
+    "grunt-contrib-uglify":  "0.2.x",
+    "grunt-contrib-jshint":  "0.6.x",
+    "grunt-contrib-qunit":  "0.2.x",
+    "grunt-contrib-watch":  "0.4.x",
+    "grunt-contrib-concat":  "0.3.x"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js"

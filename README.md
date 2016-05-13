@@ -1,12 +1,52 @@
 ![alt text](https://github.com/jsguy/dataportal/raw/master/logo.png "Dataportal logo")
 
-Share JSON across websockets to multiple clients
+Share JSON across websockets
+
+## Installation
+
+```javascript
+npm install dataportal
+```
+
+## Gettings started
+
+Create a dataportal server in node, eg:
+
+```javascript
+require('dataportal')();
+```
+
+And run it with node - it should now be running on port 32827 - to use the client side:
+
+```javascript
+<script type="text/javascript" src="build/dataportal.js?url=http://local.mac:32827/dataPortal"></script>
+<script>
+var obj = {"hello": "world"};
+
+//	Create a portal for this topic
+mp = dataPortal(obj, "myobject", {
+	onready: function(portal){
+		//	Modify our object and publish it
+		obj.time = (new Date()).getTime();
+		portal.subscribe(function(value){console.log(value);});
+		portal.publish(obj);
+	}
+});
+</script>
+
+</body>
+</html>
+```
+
+Change "http://local.mac:32827/dataPortal" to the IP address or URL of where you're running your dataportal server.
+This example should log out a message each time the object is published for the "myobject" topic - it should show the save value on the last console.og line in each browser.
 
 ## Um, why?
 
-Curiosity - I've seen many other implementations - including what they do in Meteor - they all seem unnessecarily complex for something as simple as syncing JSON across a websocket, so this is just an experiement to see if it can be done a little simpler.
+Curiosity - I've seen many other implementations - including what they do in MeteorJS - they all seem unnessecarily complex for something as simple as syncing JSON across a websocket, so this is just an experiement to see if it can be done a little simpler. Obviously this means we haven't implemented any protocols (such as [DDP](https://en.wikipedia.org/wiki/Distributed_Data_Protocol)), but rather just allow object to be syncronised, using [https://github.com/benjamine/jsondiffpatch](jsondiffpatch) for efficiency.
+As I said, this is an experiment, and so is not meant for production code.
 
-## How does it work?
+## Usage
 
 You create an object you want to share, and then a data portal with a topic:
 
@@ -32,24 +72,8 @@ The portal object controls how your data is shared with the server, you
 * **subscribe** {function(func{function(object)})}: Callback function that receives the object when it is changed
 * **close** {function(func{function(object)})}: Subscribe a callback for when the server closes the connection, you can try to re-establish the connection by reloading the page, or the portal.
 
-## Example:
+## Examples:
 
-```javascript
-var obj = {a: "b", c: [1, 2, 3]};
+See the `examples` folder in this repository.
 
-dataPortal(obj, "objtopic", function(portal){
-	//	Subscribe to changes in the object
-	portal.subscribe(function(newObjectValue){ /* act on object change */ });
-});
-```
-
-Any browser subscribed to your "objtopic" should now get a copy of the same object, inside the `subscribe` function.
-When you change your object, simply publish it, eg:
-
-```javascript
-//	Modify our object and publish the change
-obj.d = (new Date()).getTime();
-portal.publish(obj);
-```
-
-This will notify the server (and all browsers, including the one that changed) that the object has changed, and update it accordingly.
+**Note:** The examples included with Dataportal have the url of the server set to "http://local.mac:32827/dataPortal", be sure to adjust that to it uses the IP address or URL of where you're running your dataportal server, for when you test on separate machines.

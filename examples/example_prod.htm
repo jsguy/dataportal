@@ -1,0 +1,28 @@
+<html>
+<head>
+	<title>Dataportal production object example</title>
+	<script type="text/javascript" src="../build/dataportal.js?url=http://local.mac:32827/dataPortal"></script>
+	<link rel="stylesheet" type="text/css" href="css/style.css">
+</head>
+<body>
+
+<h1>Dataportal example for syncronising a JSON object</h1>
+
+<p>Open this example on 2 different machines, (or browsers), then open the console, and you should see the same object being echoed on the last line of each browser, as the last loaded browser sets the value 2nd.</p>
+
+<script>
+var obj = {"hello": "world"};
+
+//	Create a portal for this topic
+mp = dataPortal(obj, "obj2topic", {
+	onready: function(portal){
+		//	Modify our object and publish it
+		obj.time = (new Date()).getTime();
+		portal.subscribe(function(value){console.log(value);});
+		portal.publish(obj);
+	}
+});
+</script>
+
+</body>
+</html>

@@ -1,4 +1,4 @@
-var dataportal = require('./lib/dataportal.server.js'),
+var dataportal = require('../lib/dataportal.server.js'),
 	chatTopic = "chatTopic";
 
 dataportal({

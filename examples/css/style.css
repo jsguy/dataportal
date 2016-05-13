@@ -1,4 +1,6 @@
+/* Basic styling for examples */
 body {font-family: sans-serif; font-size: 62.5%;}
+textarea {width: 50rem; height: 12rem;}
 .box {margin: 1rem 0;}
 .box label {font-weight: bold; display: inline-block; width: 6rem; text-align: right; padding-right: 0.5rem;}
 .all-chats {height: 20rem; background: #05c; color: #fff; padding: 1rem 0; overflow-y: scroll }

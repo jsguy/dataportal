@@ -1,22 +1,23 @@
 <html>
 <head>
 	<title>Dataportal object example</title>
-	<script type="text/javascript" src="node_modules/jsondiffpatch/public/build/jsondiffpatch.js"></script>
-	<script type="text/javascript" src="js/sockjs-1.0.3.js"></script>
+	<script type="text/javascript" src="../node_modules/jsondiffpatch/public/build/jsondiffpatch.js"></script>
+	<script type="text/javascript" src="../lib/sockjs-1.0.3.js"></script>
 	<script type="text/javascript" src="js/jquery-1.11.3.js"></script>
-	<script type="text/javascript" src="js/hash.js"></script>
+	<script type="text/javascript" src="../lib/hash.js"></script>
     <!-- Set the url parameter to the IP address or URL of your server -->
-	<script src="js/dataportal.js?url=http://local.mac:9999/dataPortal"></script>
-	<script src="js/caretpos.js"></script>
-	<style>
-		textarea {width: 50rem; height: 12rem;}
-	</style>
+	<script src="../lib/dataportal.js?url=http://local.mac:32827/dataPortal"></script>
+	<link rel="stylesheet" type="text/css" href="css/style.css">
 </head>
 <body>
 
+<h1>Dataportal example for syncronising a JSON object</h1>
+
+<p>Open this example on 2 different machines, (or browsers), then update the object below with valid JSON, then click the "Publish" button to see it get syncronised</p>
+
 <textarea id="json">{"me": {"an": "object"}, "stuff": ["a", 2, "c"]}</textarea>
 <hr/>
-<button id="publish">Publish changed data</button>
+<button id="publish">Publish</button>
 
 <script>
 var obj,
