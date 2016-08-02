@@ -48,6 +48,25 @@ As I said, this is an experiment, and so is not meant for production code.
 
 ## Usage
 
+### Server
+
+In node.js, create a dataportal server to allow sharing of data:
+
+```javascript
+var dataportalServer = require('dataportal');
+dataportalServer(args);
+```
+
+* **port** {string}: What port to listen in, default is 32827 which is "datap" when typed on a keypad
+* **handler** {object}: A configuration object for the request handler
+* **handler.prefix** {string}: The prefix for the dataportal, default is "/dataPortal", it must match what the client uses
+* **args.handler.log** {function(severity, line)}: log handeling function, by default logs serevrity and line. Severity can be "info", "debug", "error", and the line contains the message.
+* **args.server** {object}: A configuration object for the server
+* **args.server.sockjs_url** {string}: The URL used for sockjs when the libarry , default is "http://cdn.jsdelivr.net/sockjs/1.0.3/sockjs.min.js";
+
+
+### Client
+
 You create an object you want to share, and then a data portal with a topic:
 
 ```javascript
