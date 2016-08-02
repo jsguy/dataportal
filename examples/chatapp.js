@@ -1,7 +1,9 @@
-var dataportal = require('../lib/dataportal.server.js'),
-	chatTopic = "chatTopic";
+var dataportalServer = require('../lib/dataportal.server.js'),
+	jdp = require('jsondiffpatch'),
+	chatTopic = "chatTopic",
+	chats = {};
 
-dataportal({
+dataportalServer({
 	createResponse: function(response) {
 		//	Make sure it is a topic we care about
 		if(! (response && response.topic && response.topic == chatTopic)) {
