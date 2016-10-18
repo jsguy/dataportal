@@ -45,7 +45,11 @@ var Chat = function(name, text, time) {
     	}, 100);
     };
 },vm = new ViewModel();
-ko.applyPortalBindings("chatTopic", vm, $(".js-chats").get(0));
+ko.applyPortalBindings({
+    topic: "chatTopic",
+    model: vm,
+    element: $(".js-chats").get(0)
+});
 
 //	Chat name and text model
 var ChatViewModel = function() {

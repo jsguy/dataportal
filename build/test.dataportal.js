@@ -6891,15 +6891,15 @@ module.exports = function required(port, protocol) {
 			if(typeof newObj !== "undefined") {
 				objectValue = newObj;
 			}
+			if(args.onValue) {
+				args.onValue(newObj);
+			}
 			return objectValue;
 		};
 
 		self.publish = function(newObj){
 			var testObj = JSON.parse(JSON.stringify(originalObj)),
 				delta = jdp.diff(testObj, newObj);
-
-			//	Patch it
-			self.patch({diff: delta});
 
 			//	Send it
 			sock.send(JSON.stringify({
@@ -6914,8 +6914,6 @@ module.exports = function required(port, protocol) {
 		};
 
 		//	Subscribe to messages
-		//	TODO: cache the last message, so we can always 
-		//	give new subscribers the JSON object.
 		self.subscribe = function(func, autoPatch){
 			subscriptions[topic] = subscriptions[topic] || [];
 			subscriptions[topic].push({
@@ -6971,7 +6969,6 @@ module.exports = function required(port, protocol) {
 			self.close(args.onclose);
 		}
 
-
 		//	Setup one empty subscription by default, so we autoPatch
 		if(args.autoPatch) {
 			self.ready(function(portal){
@@ -7002,11 +6999,18 @@ module.exports = function required(port, protocol) {
 		var message = JSON.parse(e.data),
 			subs, i;
 
+		//	TODO: Need to bale able to queue messages, in case it's not the latest message
+		//	We need to have messageID for each message - ie: the server needs to add this... probably a simple
+		//	counter will do. 
+		//	Note: we don't want to store any state on the server portal, so the  client cannot request specific 
+		//	items - it needs to simply keep track of which ones to apply in order.
+
+
 		if(message.type == "data") {
 			subs = getSubscribedPortals(message.topic);
 			//	Set the data
 			for(i = 0; i < subs.length; i += 1) {
-				subs[i].value(message.data);
+				subs[i].portal.value(message.data);
 			}
 		} else if(message.type == "diff") {
 			subs = getSubscribedPortals(message.topic);
@@ -7022,9 +7026,10 @@ module.exports = function required(port, protocol) {
 	};
 
 	sock.onclose = function() {
+		//	Todo: implement reconnection strategy.
 		console.log('close');
 		var portals = getPortals();
-		//	Loop on portals and call each ready method
+		//	Loop on portals and call each close function
 		for(var i = 0; i < portals.length; i += 1) {
 			for(var j = 0; j < portals[i].closeFunctions.length; j += 1){
 				portals[i].closeFunctions[j].cb(portals[i]);
@@ -7032,11 +7037,12 @@ module.exports = function required(port, protocol) {
 		}
 	};
 
-	win.dataPortal = function(object, topic, callback, onclose){
-		var myPortal = new DataPortal(object, topic, callback, onclose);
+	//	Expose dataPortal
+	//win.dataPortal = function(object, topic, callback, onclose){
+	win.dataPortal = function(object, topic, args){
+		//var myPortal = new DataPortal(object, topic, callback, onclose);
+		var myPortal = new DataPortal(object, topic, args);
 		portals.push(myPortal);
 		return myPortal;
 	};
-
-//	NOTE: We can only have 1 connection to sockjs per browser.
 }(window));

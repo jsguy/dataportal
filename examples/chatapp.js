@@ -13,6 +13,8 @@ dataportalServer({
 		//	You could do something here with the chat data
 		console.log('respond', JSON.stringify(response.diff.chats));
 
+		//	Note: this is simply passing on the response - you could do a diff here, 
+		//	if you wanted it to be efficient.
 		return response;
 	},
 	handler: {
