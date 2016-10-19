@@ -2,16 +2,24 @@
 <head>
 	<title></title>
 	<script type="text/javascript" src="js/jsondiffpatch.js"></script>
-	<script type="text/javascript" src="../lib/sockjs-1.0.3.js"></script>
+<!--    <script type="text/javascript" src="../lib/sockjs-1.0.3.js"></script> -->
+    <script type="text/javascript" src="../lib/sockjs-1.1.1.js"></script>
 	<script type="text/javascript" src="js/jquery-1.11.3.js"></script>
 	<script type="text/javascript" src="../lib/hash.js"></script>
 	<script type="text/javascript" src="js/knockout-3.3.0.js"></script>
 	<script type="text/javascript" src="js/knockout.stopbinding.js"></script>
 	<script type="text/javascript" src="../lib/adaptors/knockout.mapping-2.4.1.js"></script>
 	<script type="text/javascript" src="../lib/adaptors/knockout.dataportal-0.0.1.js"></script>
-    <!-- Set the url parameter to the IP address or URL of your server -->
-    <!--<script src="../lib/dataportal.js?url=http://local.mac:32827/dataPortal"></script>-->
-    <script src="../lib/dataportal.js?url=http://192.168.3.20:32827/dataPortal"></script>
+    <!-- 
+        Load the dataportal JS file, and set the url parameter to 
+        the IP address or URL of your server, eg: 
+    
+        <script src="../lib/dataportal.js?url=http://[YOURURL]:32827/dataPortal"></script>
+    
+        The script below will do it automatically
+    -->
+    <script>document.write("<script src='../lib/dataportal.js?url=//"+(location.host||"localhost").split(":")[0]+":32827/dataPortal'><"+"/script>");</script>
+
 	<link rel="stylesheet" type="text/css" href="css/style.css">
 </head>
 <body>
@@ -20,7 +28,7 @@
 
 <table class="data-table">
     <thead>
-        <th>Time</th>
+        <th>Time <span data-bind="text: rows().length"></span></th>
         <th>Name</th>
         <th>text</th>
     </thead>
@@ -39,7 +47,13 @@ var DataRow = function(name, text, time) {
 	var timeObj = new Date((new Date()));
     this.name = ko.observable(name);
     this.text = ko.observable(text);
-    this.time = ko.observable(timeObj.getHours() + ":" + (timeObj.getMinutes()<10?'0':'') + timeObj.getMinutes());
+    this.time = ko.observable(
+        time? time: (
+            timeObj.getHours() + ":" + 
+            (timeObj.getMinutes()<10?'0':'') + timeObj.getMinutes() + ":" + 
+            (timeObj.getSeconds()<10?'0':'') + timeObj.getSeconds()  
+        )
+    );
 }, ViewModel = function() {
     var me = this;
     me.rows = ko.observableArray([]);
