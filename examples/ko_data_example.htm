@@ -28,25 +28,23 @@
 
 <table class="data-table">
     <thead>
-        <th>Time <span data-bind="text: rows().length"></span></th>
-        <th>Name</th>
-        <th>text</th>
+        <th>Time</th>
+        <th>Name (<span data-bind="text: rows().length"></span>)</th>
     </thead>
     <tbody data-bind="foreach: rows">
-        <tr>
+        <tr data-bind="style: {backgroundColor: colour()}">
             <td data-bind="text: time()"></td>
             <td data-bind="text: name()"></td>
-            <td data-bind="text: text()"></td>
         </tr>
     </tbody>
 </table>
 
 <script>
 //	Data model
-var DataRow = function(name, text, time) {
+var DataRow = function(name, colour, time) {
 	var timeObj = new Date((new Date()));
     this.name = ko.observable(name);
-    this.text = ko.observable(text);
+    this.colour = ko.observable(colour);
     this.time = ko.observable(
         time? time: (
             timeObj.getHours() + ":" + 
@@ -66,7 +64,7 @@ ko.applyPortalBindings({
     mappingOptions: {
         'rows': {
             create: function(options) {
-                return new DataRow(options.data.name, options.data.text, options.data.time);
+                return new DataRow(options.data.name, options.data.colour, options.data.time);
             }
         }
     }
