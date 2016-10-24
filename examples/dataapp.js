@@ -1,9 +1,52 @@
+/*
+	WIP: A generic JSON diffing server that allows arbitrary JSON
+	to be synced between multiple users
+
+	TODO:
+
+	* Implement server-side diffing and patching
+	* Implememnt versioning for patches, so the client can see if they're out of sync, and request the original value again.
+	* Ensure we do as little processing on the server as possible.
+
+*/
+
 var dataportalServer = require('../lib/dataportal.server.js'),
 	jdp = require('jsondiffpatch'),
-	myTopic = "dataTopic";
+	myTopic = "dataTopic",
+	_fromPatch = false,
+	prevResponse,
+	prevCId;
 
 //	Setup a portal
 var dp = dataportalServer({
+
+
+	//	PROBLEM: We create a response for every client
+	//	That means we're modifying the object for each client
+	//	That's bad, as in contains potassium benzoate bad.
+
+	createResponse: function(response, cId) {
+		//	Make sure it is a topic we care about
+		//	Otherwise simply pass it through
+		if(! (response && response.topic && response.topic == myTopic)) {
+			return response;
+		}
+
+		//	Debounce - we get multiple responses, one for every client, so don't patch, if it is a repeat
+		if(prevResponse && prevCId == cId && response.type == prevResponse.type && prevResponse.hash == response.hash) {
+			return response;
+		}
+
+		//	Patch our data
+		if(!_fromPatch && response.type == "diff") {
+			jdp.patch(data, response.diff);
+			prevResponse = response;
+			prevCId = cId;
+		}
+
+		//	Pass on the response
+		return response;
+	},
 	//	When they connect, we create a data response to send the current data.
 	onConnect: function(client) {
 		dp.sendMessage(client, dp.createResponse("data", myTopic, {
@@ -45,7 +88,7 @@ var rnd = function(list) {
 			};
 		return dataRow;
 	},
-	//	Initial data
+	//	Our data
 	data = {
 		rows: [
 			createRow("Billy"),
@@ -61,10 +104,10 @@ var rnd = function(list) {
 var modifyData = function(){
 	var rowLength = data.rows.length,
 		removeData = rowLength > 1 && Math.random() >= 0.5,
-		oData = JSON.parse(JSON.stringify(data));
+		oData = JSON.parse(JSON.stringify(data)),
+		removeIndex = Math.round(Math.random() * (rowLength - 1));
 
 	if(removeData) {
-		removeIndex = Math.round(Math.random() * (rowLength - 1));
 		data.rows.splice(removeIndex, 1);
 	} else {
 		data.rows.push(createRow());
@@ -73,7 +116,11 @@ var modifyData = function(){
 	var diff = jdp.diff(oData, data);
 
 	if(diff) {
-		dp.publish(myTopic, {diff: diff});
+		_fromPatch = true;
+		dp.publish(myTopic, {diff: diff}, "DATAAPP");
+		_fromPatch = false;
+		//	Update oData
+		oData = JSON.parse(JSON.stringify(data));
 	}
 
 	setTimeout(modifyData, rndTime());
