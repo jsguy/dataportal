@@ -9,6 +9,7 @@
 var dataportalServer = require('../lib/dataportal.server.js'),
 	jdp = require('jsondiffpatch'),
 	myTopic = "dataTopic",
+	topicPatchId = 0,
 	_fromPatch = false,
 	prevResponse,
 	prevCId;
@@ -16,6 +17,8 @@ var dataportalServer = require('../lib/dataportal.server.js'),
 //	Setup a portal
 var dp = dataportalServer({
 	createResponse: function(response, cId) {
+		response = response || {};
+		response.topicPatchId = topicPatchId;
 		//	Make sure it is a topic we care about, otherwise simply pass it through
 		if(! (response && response.topic && response.topic == myTopic)) {
 			return response;
@@ -31,6 +34,7 @@ var dp = dataportalServer({
 			jdp.patch(data, response.diff);
 			prevResponse = response;
 			prevCId = cId;
+			topicPatchId += 1;
 		}
 
 		//	Pass on the response
@@ -104,8 +108,10 @@ var modifyData = function(){
 
 	var diff = jdp.diff(oData, data);
 
+	//	Internal patch
 	if(diff) {
 		_fromPatch = true;
+		topicPatchId += 1;
 		dp.publish(myTopic, {diff: diff}, "DATAAPP");
 		_fromPatch = false;
 		//	Update oData
